@@ -6,8 +6,8 @@ namespace Prototype
 {
     public class Clicker : MonoBehaviour
     {
+        public static Action<Vector2Int> OnCellHovered;
         public static Action<Vector2Int> OnCellClicked;
-        
         private Camera _camera;
         
         private void Start()
@@ -17,21 +17,23 @@ namespace Prototype
 
         private void Update()
         {
-            if (Mouse.current.leftButton.wasPressedThisFrame)
+            var coordinate = FindHoveredCell();
+            if (Mouse.current.leftButton.wasPressedThisFrame && coordinate != null)
             {
-                FindClickedCell();
+                OnCellClicked?.Invoke(coordinate.Value);
             }
         }
 
-        private void FindClickedCell()
+        private Vector2Int? FindHoveredCell()
         {
             var mousePosition = Mouse.current.position.ReadValue();
             var worldPoint = _camera.ScreenToWorldPoint(mousePosition);
             var hit = Physics2D.Raycast(worldPoint, Vector2.zero);
-            if (!hit.collider) return;
-            var cell = ClampToCell(hit.point);
-            if (!InRange(cell)) return;
-            OnCellClicked?.Invoke(cell);
+            if (!hit.collider) return null;
+            var cellCoordinates = ClampToCell(hit.point);
+            if (!InRange(cellCoordinates)) return null;
+            OnCellHovered?.Invoke(cellCoordinates);
+            return cellCoordinates;
         }
 
         private Vector2Int ClampToCell(Vector3 hitPoint)

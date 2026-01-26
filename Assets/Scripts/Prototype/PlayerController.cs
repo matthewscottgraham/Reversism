@@ -20,5 +20,11 @@ namespace Prototype
             ++CurrentPlayer;
             CurrentPlayer %= NumberOfPlayers;
         }
+
+        public static Color GetPlayerColour(int player)
+        {
+            if (player < 0 || player >= NumberOfPlayers) return Color.clear;
+            return PlayerColours[player];
+        }
     }
 }

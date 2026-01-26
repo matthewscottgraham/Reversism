@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Prototype
 {
@@ -8,10 +9,9 @@ namespace Prototype
     {
         public static Vector2Int GridSize  = new Vector2Int(12, 12);
 
-        [SerializeField] private Sprite _sprite;
-        
-        private int[,] _cells;
-        private Dictionary<Vector2Int, SpriteRenderer> _spriteRenderers;
+        [FormerlySerializedAs("_sprite")] [SerializeField] private Sprite sprite;
+        private Dictionary<Vector2Int, Cell> _cellDictionary;
+        private HashSet<Cell> _hoveredCells = new();
 
         private void Awake()
         {
@@ -21,37 +21,39 @@ namespace Prototype
         private void OnEnable()
         {
             Clicker.OnCellClicked += HandleCellClicked;
+            Clicker.OnCellHovered += HandleCellHovered;
         }
 
         private void OnDisable()
         {
             Clicker.OnCellClicked -= HandleCellClicked;
+            Clicker.OnCellHovered -= HandleCellHovered;
         }
 
         private void InitializeCells()
         {
-            _spriteRenderers = new Dictionary<Vector2Int, SpriteRenderer>();
-            _cells = new int[GridSize.x, GridSize.y];
+            _cellDictionary = new Dictionary<Vector2Int, Cell>();
             
-            for (var x = 0; x < _cells.GetLength(0); x++)
+            for (var x = 0; x < GridSize.x; x++)
             {
-                for (var y = 0; y < _cells.GetLength(1); y++)
+                for (var y = 0; y < GridSize.y; y++)
                 {
-                    _cells[x, y] = -1;
-                    _spriteRenderers.Add(new Vector2Int(x,y), CreateCellObject(x, y));
+                    _cellDictionary.Add(new Vector2Int(x,y), CreateCellObject(x, y));
                 }
             }
         }
 
-        private SpriteRenderer CreateCellObject(int x, int y)
+        private Cell CreateCellObject(int x, int y)
         {
             var go = new GameObject();
             go.transform.SetParent(transform);
             go.transform.localPosition = new Vector3(x + 0.5f, y + 0.5f);
+            
             var spriteRenderer = go.AddComponent<SpriteRenderer>();
-            spriteRenderer.sprite = _sprite;
-            spriteRenderer.color = Color.clear;
-            return spriteRenderer;
+            spriteRenderer.sprite = sprite;
+            
+            var cell = go.AddComponent<Cell>();
+            return cell;
         }
 
         private void HandleCellClicked(Vector2Int cell)
@@ -61,12 +63,27 @@ namespace Prototype
             PlayerController.IncrementPlayer();
         }
 
+        private void HandleCellHovered(Vector2Int coordinate)
+        {
+            if (_hoveredCells.Count > 0)
+            {
+                foreach (var hoveredCell in _hoveredCells)
+                {
+                    hoveredCell.DeHover();
+                }
+                _hoveredCells.Clear();
+            }
+            
+            _hoveredCells.Add(_cellDictionary[coordinate]);
+            foreach (var hoveredCell in _hoveredCells)
+            {
+                hoveredCell.Hover();
+            }
+        }
+
         private bool ClaimCell(Vector2Int cell, int player)
         {
-            if (_cells[cell.x, cell.y] >= 0) return false; // already claimed
-            _cells[cell.x, cell.y] = player;
-            _spriteRenderers[cell].color = PlayerController.CurrentPlayerColour;
-            return true;
+            return _cellDictionary[cell].Claim(player);
         }
     }
 }
