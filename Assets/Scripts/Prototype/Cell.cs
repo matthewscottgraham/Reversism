@@ -25,7 +25,8 @@ namespace Prototype
             if (_owner >= 0 ) return false;
             _owner = owner;
             SetColor(PlayerController.GetPlayerColour(_owner));
-            return true;
+            PlayerController.IncrementScore(_owner, 1);
+            return true;    
         }
 
         private void Start()

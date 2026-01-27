@@ -8,10 +8,11 @@ namespace Prototype
     public class CellController : MonoBehaviour
     {
         public static Vector2Int GridSize  = new Vector2Int(12, 12);
-
         [SerializeField] private Sprite sprite;
         private Dictionary<Vector2Int, Cell> _cellDictionary;
         private readonly HashSet<Cell> _hoveredCells = new();
+        
+        public static int MaxScore => GridSize.x * GridSize.y;
 
         private void Awake()
         {

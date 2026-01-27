@@ -6,7 +6,7 @@ namespace Prototype
 {
     public class LineController : MonoBehaviour
     {
-        private const float LineWidth = 0.05f;
+        private static readonly Vector2 LineWidthRange = new Vector2(0.005f, 0.02f);
         private const float PointDisplacementAmount = 2f;
         private void Start()
         {
@@ -38,10 +38,11 @@ namespace Prototype
             var lineObject = new GameObject();
             lineObject.transform.SetParent(childObject.transform, false);
             var lineRenderer = lineObject.AddComponent<LineRenderer>();
-            lineRenderer.widthMultiplier = LineWidth;
+            lineRenderer.startWidth = Random.Range(LineWidthRange.x, LineWidthRange.y);
+            lineRenderer.endWidth = Random.Range(LineWidthRange.x, LineWidthRange.y);
             lineRenderer.sharedMaterial = new Material(Shader.Find("Sprites/Default"));
-            lineRenderer.startColor = Color.white;
-            lineRenderer.endColor = Color.white;
+            lineRenderer.startColor = new Color(1,1,1, Random.value);
+            lineRenderer.endColor = new Color(1,1,1, Random.value);
             return lineRenderer;
         }
 
