@@ -351,6 +351,7 @@ GameObject:
   - component: {fileID: 780731597}
   - component: {fileID: 780731596}
   - component: {fileID: 780731595}
+  - component: {fileID: 780731599}
   - component: {fileID: 780731598}
   m_Layer: 0
   m_Name: Grid
@@ -371,7 +372,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd08c863a0334f4fa9ff71bd35bf167a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Prototype.CellController
-  _sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
+  sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
 --- !u!114 &780731596
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -445,6 +446,18 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 12, y: 12}
   m_EdgeRadius: 0
+--- !u!114 &780731599
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 780731594}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d3007099567a4fe29c57bb9c494e621, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LineController
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

@@ -9,9 +9,9 @@ namespace Prototype
     {
         public static Vector2Int GridSize  = new Vector2Int(12, 12);
 
-        [FormerlySerializedAs("_sprite")] [SerializeField] private Sprite sprite;
+        [SerializeField] private Sprite sprite;
         private Dictionary<Vector2Int, Cell> _cellDictionary;
-        private HashSet<Cell> _hoveredCells = new();
+        private readonly HashSet<Cell> _hoveredCells = new();
 
         private void Awake()
         {
@@ -51,6 +51,7 @@ namespace Prototype
             
             var spriteRenderer = go.AddComponent<SpriteRenderer>();
             spriteRenderer.sprite = sprite;
+            spriteRenderer.sortingOrder = 1;
             
             var cell = go.AddComponent<Cell>();
             return cell;
