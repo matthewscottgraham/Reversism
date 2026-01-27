@@ -6,12 +6,13 @@ namespace Prototype
     {
         private int _owner = -1;
         private Renderer _renderer;
-        private static readonly Color HoverColor = Color.cyan;
+        
+        public bool IsClaimable => _owner < 0;
         
         public void Hover()
         {
             if (_owner >= 0 ) return;
-            SetColor(HoverColor);
+            SetColor(PlayerController.CurrentHoverColour);
         }
 
         public void DeHover()

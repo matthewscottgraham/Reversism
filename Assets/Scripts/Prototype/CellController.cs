@@ -7,11 +7,11 @@ namespace Prototype
 {
     public class CellController : MonoBehaviour
     {
-        public static Vector2Int GridSize  = new Vector2Int(12, 12);
         [SerializeField] private Sprite sprite;
         private Dictionary<Vector2Int, Cell> _cellDictionary;
-        private readonly HashSet<Cell> _hoveredCells = new();
+        private HashSet<Cell> _hoveredCells = new();
         
+        public static Vector2Int GridSize => new Vector2Int(12, 12);
         public static int MaxScore => GridSize.x * GridSize.y;
 
         private void Awake()
@@ -58,10 +58,10 @@ namespace Prototype
             return cell;
         }
 
-        private void HandleCellClicked(Vector2Int cell)
+        private void HandleCellClicked(Vector2Int coordinate)
         {
             var currentPlayer = PlayerController.CurrentPlayer;
-            if (!ClaimCell(cell, currentPlayer)) return;
+            if (!ClaimHoveredCells(currentPlayer)) return;
             PlayerController.IncrementPlayer();
         }
 
@@ -75,17 +75,45 @@ namespace Prototype
                 }
                 _hoveredCells.Clear();
             }
-            
-            _hoveredCells.Add(_cellDictionary[coordinate]);
+
+            GetHoveredCells(coordinate);
             foreach (var hoveredCell in _hoveredCells)
             {
                 hoveredCell.Hover();
             }
         }
 
-        private bool ClaimCell(Vector2Int cell, int player)
+        private bool ClaimHoveredCells(int player)
         {
-            return _cellDictionary[cell].Claim(player);
+            if (_hoveredCells.Count == 0) return false;
+            foreach (var hoveredCell in _hoveredCells)
+            {
+                if (!hoveredCell.IsClaimable) return false;
+            }
+
+            foreach (var hoveredCell in _hoveredCells)
+            {
+                hoveredCell.Claim(player);
+            }
+            return true;
+        }
+
+        private void GetHoveredCells(Vector2Int coordinate)
+        {
+            var tiles = TileController.CurrentTile.Shape;
+            HashSet<Cell> hoveredCells = new();
+            for (var x = 0; x < tiles.GetLength(0); x++)
+            {
+                for (var y = 0; y < tiles.GetLength(1); y++)
+                {
+                    if (!tiles[x, y]) continue;
+                    var adjustedCoordinate = new Vector2Int(x + coordinate.x, y + coordinate.y);
+                    if (!_cellDictionary.TryGetValue(adjustedCoordinate, out var value)) continue;
+                    if (!value.IsClaimable) return;
+                    hoveredCells.Add(value);
+                }
+            }
+            _hoveredCells = hoveredCells;
         }
     }
 }

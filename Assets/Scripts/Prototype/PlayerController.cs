@@ -5,23 +5,32 @@ namespace Prototype
     public static class PlayerController
     {
         public static System.Action<int, float> OnPlayerScoreChange;
+        public static System.Action OnPlayerChanged;
+        
         private const int NumberOfPlayers = 2;
 
         private static readonly Color[] PlayerColours = new[]
         {
-            new Color(0, 0, 255, 255),
-            new Color(255, 0, 0, 255),
+            new Color(0.26f, 0.26f, 0.86f, 1),
+            new Color(0.80f, 0.21f, 0.21f, 1),
         };
 
+        private static readonly Color[] HoverColours = new[]
+        {
+            new Color(0.46f, 0.46f, 0.96f, 1),
+            new Color(0.90f, 0.41f, 0.41f, 1),
+        };
 
         public static int[] Score { get; private set; } = new int[NumberOfPlayers];
         public static int CurrentPlayer { get; private set; } = 0;
         public static Color CurrentPlayerColour => PlayerColours[CurrentPlayer];
+        public static Color CurrentHoverColour => HoverColours[CurrentPlayer];
 
         public static void IncrementPlayer()
         {
             ++CurrentPlayer;
             CurrentPlayer %= NumberOfPlayers;
+            OnPlayerChanged?.Invoke();
         }
 
         public static Color GetPlayerColour(int player)
