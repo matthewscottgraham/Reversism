@@ -1,7 +1,5 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace Prototype
 {
@@ -16,6 +14,7 @@ namespace Prototype
         
         private void UpdateBoardState(int[,] boardState)
         {
+            if (boardState == null) return;
             for (var x = 0; x < boardState.GetLength(0); x++)
             {
                 for (var y = 0; y < boardState.GetLength(1); y++)
@@ -77,8 +76,21 @@ namespace Prototype
         {
             var currentPlayer = PlayerController.CurrentPlayer;
             if (!ClaimHoveredCells(currentPlayer)) return;
-            UpdateBoardState(RuleChecker.ApplyPostTurnRules(GetBoardState(), currentPlayer));
+            UpdateBoardState(_ruleChecker.ApplyPostTurnRules(GetBoardState(), currentPlayer, GetHoveredCoordinates()));
             PlayerController.IncrementPlayer();
+        }
+
+        private Vector2Int[] GetHoveredCoordinates()
+        {
+            var coordinates = new Vector2Int[_hoveredCells.Count];
+            var index = 0;
+            foreach (var hoveredCell in _hoveredCells)
+            {
+                coordinates[index] = hoveredCell.Coordinate;
+                index++;
+            }
+
+            return coordinates;
         }
 
         private void HandleCellHovered(Vector2Int coordinate)

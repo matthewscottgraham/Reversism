@@ -4,80 +4,66 @@
     {
         public class RuleChecker
         {
-            private const int MaxRecursions = 1000;
+            private bool _stateWasChanged = false;
             
-            public static int[,] ApplyPostTurnRules(int[,] boardState, int currentPlayer)
+            public int[,] ApplyPostTurnRules(int[,] boardState, int currentPlayer, Vector2Int[] changedCells)
             {
-                return RecurseUntilNoChanges(boardState, currentPlayer);
-            }
-
-            private static int[,] RecurseUntilNoChanges(int[,] boardState, int currentPlayer)
-            {
-                var recursions = 0;
-                while (recursions < MaxRecursions)
+                _stateWasChanged = false;
+                // Reversi style capture of cells trapped between the current players cells
+                foreach (var coordinate in changedCells)
                 {
-                    // Reversi style capture of cells trapped between the current players cells
-                    var stateChanged = CheckForCapturedHorizontalSpans(boardState, currentPlayer, out boardState);
-                    stateChanged |= CheckForCapturedVerticalSpans(boardState, currentPlayer, out boardState);
-                    
-                    // tetris style line removal
-                    stateChanged |= CheckForFilledRows(boardState, currentPlayer, out boardState);
-                    stateChanged |= CheckForFilledColumns(boardState, currentPlayer, out boardState);
-                    
-                    if (!stateChanged) return boardState;
-                    recursions++;
+                    boardState = CheckForCapturedHorizontalSpans(boardState, currentPlayer, coordinate);
+                    boardState =CheckForCapturedVerticalSpans(boardState, currentPlayer, coordinate);
                 }
-
+                
+                // tetris style line removal
+                foreach (var coordinate in changedCells)
+                {
+                    boardState = CheckForFilledRows(boardState, currentPlayer, coordinate);
+                    boardState = CheckForFilledColumns(boardState, currentPlayer, coordinate);
+                }
+                
+                return _stateWasChanged ? boardState : null;
+            }
+            
+            private int[,] CheckForCapturedHorizontalSpans(int[,] boardState, int currentPlayer, Vector2Int coordinate)
+            {
+                if (boardState[coordinate.x, coordinate.y] != currentPlayer) return boardState;
+                
+                var leftBoundary = coordinate.x - 1;
+                while (leftBoundary >= 0 
+                       && boardState[leftBoundary, coordinate.y] != currentPlayer)
+                {
+                    var owner = boardState[leftBoundary, coordinate.y];
+                    if (owner < 0)
+                    {
+                        leftBoundary = coordinate.x;
+                        break;
+                    }
+                    leftBoundary--;
+                }
+                
+                var rightBoundary = coordinate.x + 1;
+                while (rightBoundary < boardState.GetLength(0) 
+                       && boardState[rightBoundary, coordinate.y] != currentPlayer)
+                {
+                    var owner = boardState[rightBoundary, coordinate.y];
+                    if (owner < 0)
+                    {
+                        rightBoundary = coordinate.x;
+                        break;
+                    }
+                    rightBoundary++;
+                }
+                
+                // If there is no distance between the boundaries, there is nothing to capture;
+                if (leftBoundary - rightBoundary == 0) return boardState;
+                
+                ChangeRowOwners(boardState, currentPlayer, leftBoundary + 1, rightBoundary, coordinate.y);
                 return boardState;
             }
 
-            private static bool CheckForCapturedHorizontalSpans(int[,] boardState, int currentPlayer, out int[,] newBoardState)
-            {
-                newBoardState = boardState;
-                for (var y = 0; y < newBoardState.GetLength(1); y++)
-                {
-                    for (var x = 0; x < newBoardState.GetLength(0); x++)
-                    {
-                        var owner = newBoardState[x, y];
-                        if (owner < 0) continue;
-                        var leftBoundary = FindLeftBoundaryOwner(owner, newBoardState, x, y);
-                        if (leftBoundary.owner != currentPlayer) continue;
-                        var rightBoundary = FindRightBoundaryOwner(owner, newBoardState, x, y);
-                        if (leftBoundary.owner != rightBoundary.owner) continue;
-                        if (leftBoundary.owner == owner || rightBoundary.owner == owner) continue;
-                        if (leftBoundary.owner < 0 || rightBoundary.owner < 0) continue;
-                        if (ChangeRowOwners(newBoardState, leftBoundary.owner, leftBoundary.index, rightBoundary.index, y))
-                        {
-                            return true;
-                        }
-                    }
-                }
-                return false;
-            }
-
-            private static (int owner, int index) FindLeftBoundaryOwner(int middleOwner, int[,] boardState, int x, int y)
-            {
-                var position = x;
-                while (position >= 0)
-                {
-                    if (boardState[position, y] != middleOwner) return (boardState[position, y], position);
-                    position--;
-                }
-                return (middleOwner, 0);
-            }
-            
-            private static (int owner, int index) FindRightBoundaryOwner(int middleOwner, int[,] boardState, int x, int y)
-            {
-                var position = x;
-                while (position < boardState.GetLength(0))
-                {
-                    if (boardState[position, y] != middleOwner) return (boardState[position, y], position);
-                    position++;
-                }
-                return (middleOwner, boardState.GetLength(0) - 1);
-            }
-
-            private static bool ChangeRowOwners(int[,] boardState, int newOwner, int boundsLeft, int boundsRight, int y)
+            private void ChangeRowOwners(int[,] boardState, int newOwner, int boundsLeft, int boundsRight, int y)
             {
                 var changed = false;
                 for (var x = boundsLeft; x < boundsRight; x++)
@@ -86,58 +72,47 @@
                     boardState[x, y] = newOwner;
                     changed = true;
                 }
-
-                return changed;
+                _stateWasChanged = changed || _stateWasChanged;
             }
-            
-            private static bool CheckForCapturedVerticalSpans(int[,] boardState, int currentPlayer, out int[,] newBoardState)
+
+            private int[,] CheckForCapturedVerticalSpans(int[,] boardState, int currentPlayer, Vector2Int coordinate)
             {
-                newBoardState = boardState;
-                for (var y = 0; y < newBoardState.GetLength(1); y++)
+                if (boardState[coordinate.x, coordinate.y] != currentPlayer) return boardState;
+                
+                var bottomBoundary = coordinate.y - 1;
+                while (bottomBoundary >= 0 
+                       && boardState[coordinate.x, bottomBoundary] != currentPlayer)
                 {
-                    for (var x = 0; x < newBoardState.GetLength(0); x++)
+                    var owner = boardState[coordinate.x, bottomBoundary];
+                    if (owner < 0)
                     {
-                        var owner = newBoardState[x, y];
-                        if (owner < 0) continue;
-                        var bottomBoundary = FindBottomBoundaryOwner(owner, newBoardState, x, y);
-                        if (bottomBoundary.owner != currentPlayer) continue;
-                        var topBoundary = FindTopBoundaryOwner(owner, newBoardState, x, y);
-                        if (bottomBoundary.owner != topBoundary.owner) continue;
-                        if (bottomBoundary.owner == owner || topBoundary.owner == owner) continue;
-                        if (bottomBoundary.owner < 0 || topBoundary.owner < 0) continue;
-                        if (ChangeColumnOwners(newBoardState, bottomBoundary.owner, bottomBoundary.index, topBoundary.index,
-                                x))
-                        {
-                            return true;
-                        }
+                        bottomBoundary = coordinate.y;
+                        break;
                     }
+                    bottomBoundary--;
                 }
-                return false;
+                
+                var topBoundary = coordinate.y + 1;
+                while (topBoundary < boardState.GetLength(1) 
+                       && boardState[coordinate.x, topBoundary] != currentPlayer)
+                {
+                    var owner = boardState[coordinate.x, topBoundary];
+                    if (owner < 0)
+                    {
+                        topBoundary = coordinate.y;
+                        break;
+                    }
+                    topBoundary++;
+                }
+                
+                // If there is no distance between the boundaries, there is nothing to capture;
+                if (bottomBoundary - topBoundary == 0) return boardState;
+                
+                ChangeColumnOwners(boardState, currentPlayer, bottomBoundary + 1, topBoundary, coordinate.x);
+                return boardState;
             }
 
-            private static (int owner, int index) FindBottomBoundaryOwner(int middleOwner, int[,] boardState, int x, int y)
-            {
-                var position = y;
-                while (position >= 0)
-                {
-                    if (boardState[x, position] != middleOwner) return (boardState[x, position], position);
-                    position--;
-                }
-                return (middleOwner, 0);
-            }
-            
-            private static (int owner, int index) FindTopBoundaryOwner(int middleOwner, int[,] boardState, int x, int y)
-            {
-                var position = y;
-                while (position < boardState.GetLength(1))
-                {
-                    if (boardState[x, position] != middleOwner) return (boardState[x, position], position);
-                    position++;
-                }
-                return (middleOwner, boardState.GetLength(1) - 1);
-            }
-
-            private static bool ChangeColumnOwners(int[,] boardState, int newOwner, int boundsBottom, int boundsTop, int x)
+            private void ChangeColumnOwners(int[,] boardState, int newOwner, int boundsBottom, int boundsTop, int x)
             {
                 var changed = false;
                 for (var y = boundsBottom; y < boundsTop; y++)
@@ -146,51 +121,41 @@
                     boardState[x, y] = newOwner;
                     changed = true;
                 }
-                return changed;
+                _stateWasChanged = changed || _stateWasChanged;
             }
 
-            private static bool CheckForFilledRows(int[,] boardState, int currentPlayer, out int[,] newBoardState)
+            private int[,] CheckForFilledRows(int[,] boardState, int currentPlayer, Vector2Int coordinate)
             {
-                newBoardState = boardState;
-                var changed = false;
-                var width = newBoardState.GetLength(0);
-                for (var y = 0; y < newBoardState.GetLength(1); y++)
+                var width = boardState.GetLength(0);
+                var fullLine = true;
+                for (var x = 0; x < width; x++)
                 {
-                    var fullLine = true;
-                    for (var x = 0; x < width; x++)
-                    {
-                        if (newBoardState[x, y] == currentPlayer) continue;
-                        fullLine = false;
-                        break;
-                    }
-
-                    if (!fullLine) continue;
-                    ChangeRowOwners(newBoardState, -1, 0, width, y);
-                    changed = true;
+                    if (boardState[x, coordinate.y] == currentPlayer) continue;
+                    fullLine = false;
+                    break;
                 }
-                return changed;
+
+                if (!fullLine) return boardState;
+                ChangeRowOwners(boardState, -1, 0, width, coordinate.y);
+                _stateWasChanged = true;
+                return boardState;
             }
 
-            private static bool CheckForFilledColumns(int[,] boardState, int currentPlayer, out int[,] newBoardState)
+            private int[,] CheckForFilledColumns(int[,] boardState, int currentPlayer, Vector2Int coordinate)
             {
-                newBoardState = boardState;
-                var changed = false;
-                var height = newBoardState.GetLength(1);
-                for (var x = 0; x < newBoardState.GetLength(0); x++)
+                var height = boardState.GetLength(1);
+                var fullLine = true;
+                for (var y = 0; y < height; y++)
                 {
-                    var fullLine = true;
-                    for (var y = 0; y < height; y++)
-                    {
-                        if (newBoardState[x, y] == currentPlayer) continue;
-                        fullLine = false;
-                        break;
-                    }
-                    
-                    if (!fullLine) continue;
-                    ChangeColumnOwners(newBoardState, -1, 0, height, x);
-                    changed = true;
+                    if (boardState[coordinate.x, y] == currentPlayer) continue;
+                    fullLine = false;
+                    break;
                 }
-                return changed;
+                
+                if (!fullLine) return boardState;
+                ChangeColumnOwners(boardState, -1, 0, height, coordinate.x);
+                _stateWasChanged = true;
+                return boardState;
             }
         }
     }

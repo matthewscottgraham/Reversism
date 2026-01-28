@@ -10,6 +10,8 @@ namespace Prototype
         public bool IsClaimable => _owner < 0;
         public int Owner => _owner;
         
+        public Vector2Int Coordinate => new((int)transform.position.x, (int)transform.position.y);
+        
         public void Hover()
         {
             if (_owner >= 0 ) return;
