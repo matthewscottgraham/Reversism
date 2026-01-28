@@ -13,7 +13,6 @@ namespace Prototype
         private RuleChecker _ruleChecker;
         
         public static Vector2Int GridSize => new Vector2Int(12, 12);
-        public static int MaxScore => GridSize.x * GridSize.y;
         
         private void UpdateBoardState(int[,] boardState)
         {

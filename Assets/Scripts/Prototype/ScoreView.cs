@@ -17,9 +17,9 @@ namespace Prototype
             PlayerController.OnPlayerScoreChange -= HandlePlayerScoreChange;
         }
 
-        private void HandlePlayerScoreChange(int playerIndex, float percentage)
+        private void HandlePlayerScoreChange(int playerIndex, int newScore)
         {
-            playerProgress[playerIndex].value = percentage;
+            playerProgress[playerIndex].value = newScore;
         }
     }
 }

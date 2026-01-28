@@ -4,7 +4,7 @@ namespace Prototype
 {
     public static class PlayerController
     {
-        public static System.Action<int, float> OnPlayerScoreChange;
+        public static System.Action<int, int> OnPlayerScoreChange;
         public static System.Action OnPlayerChanged;
         
         private const int NumberOfPlayers = 2;
@@ -21,15 +21,21 @@ namespace Prototype
             new Color(0.90f, 0.41f, 0.41f, 1),
         };
 
+        public static int ScoreMultiplier { get; private set; } = 1;
         public static int[] Score { get; private set; } = new int[NumberOfPlayers];
         public static int CurrentPlayer { get; private set; } = 0;
         public static Color CurrentPlayerColour => PlayerColours[CurrentPlayer];
         public static Color CurrentHoverColour => HoverColours[CurrentPlayer];
 
+        public static void IncrementMultiplier()
+        {
+            ScoreMultiplier++;
+        }
         public static void IncrementPlayer()
         {
             ++CurrentPlayer;
             CurrentPlayer %= NumberOfPlayers;
+            ScoreMultiplier = 1;
             OnPlayerChanged?.Invoke();
         }
 
@@ -42,9 +48,10 @@ namespace Prototype
         public static void IncrementScore(int player, int increment)
         {
             if (player < 0 || player >= NumberOfPlayers) return;
-            Score[player] += increment;
+            Score[player] += increment * ScoreMultiplier;
             if (Score[player] < 0) Score[player] = 0;
-            OnPlayerScoreChange?.Invoke(player, (float)Score[player] / CellController.MaxScore);
+            if (Score[player] >= 1000) Debug.Log($"Player {player} has {Score[player]} points.");
+            OnPlayerScoreChange?.Invoke(player, Score[player]);
         }
     }
 }
