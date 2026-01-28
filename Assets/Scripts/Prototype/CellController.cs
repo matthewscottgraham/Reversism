@@ -10,12 +10,28 @@ namespace Prototype
         [SerializeField] private Sprite sprite;
         private Dictionary<Vector2Int, Cell> _cellDictionary;
         private HashSet<Cell> _hoveredCells = new();
+        private RuleChecker _ruleChecker;
         
         public static Vector2Int GridSize => new Vector2Int(12, 12);
         public static int MaxScore => GridSize.x * GridSize.y;
-
+        
+        private void UpdateBoardState(int[,] boardState)
+        {
+            for (var x = 0; x < boardState.GetLength(0); x++)
+            {
+                for (var y = 0; y < boardState.GetLength(1); y++)
+                {
+                    if (_cellDictionary.TryGetValue(new Vector2Int(x, y), out var cell))
+                    {
+                        cell.SetOwner(boardState[x, y]);
+                    }
+                }
+            }
+        }
+        
         private void Awake()
         {
+            _ruleChecker = new RuleChecker();
             InitializeCells();
         }
 
@@ -62,6 +78,7 @@ namespace Prototype
         {
             var currentPlayer = PlayerController.CurrentPlayer;
             if (!ClaimHoveredCells(currentPlayer)) return;
+            UpdateBoardState(RuleChecker.ApplyPostTurnRules(GetBoardState(), currentPlayer));
             PlayerController.IncrementPlayer();
         }
 
@@ -102,18 +119,44 @@ namespace Prototype
         {
             var tiles = TileController.CurrentTile.Shape;
             HashSet<Cell> hoveredCells = new();
+            bool inBounds = true;
             for (var x = 0; x < tiles.GetLength(0); x++)
             {
                 for (var y = 0; y < tiles.GetLength(1); y++)
                 {
                     if (!tiles[x, y]) continue;
                     var adjustedCoordinate = new Vector2Int(x + coordinate.x, y + coordinate.y);
-                    if (!_cellDictionary.TryGetValue(adjustedCoordinate, out var value)) continue;
+                    if (!_cellDictionary.TryGetValue(adjustedCoordinate, out var value))
+                    {
+                        inBounds = false;
+                        continue;
+                    }
                     if (!value.IsClaimable) return;
                     hoveredCells.Add(value);
                 }
             }
+            if (!inBounds) return;
             _hoveredCells = hoveredCells;
+        }
+
+        private int[,] GetBoardState()
+        {
+            var board = new int[GridSize.x, GridSize.y];
+            for (var x = 0; x < board.GetLength(0); x++)
+            {
+                for (var y = 0; y < board.GetLength(1); y++)
+                {
+                    if (_cellDictionary.TryGetValue(new Vector2Int(x, y), out var cell))
+                    {
+                        board[x, y] = cell.Owner;
+                    }
+                    else
+                    {
+                        board[x, y] = -1;
+                    }
+                }
+            }
+            return board;
         }
     }
 }

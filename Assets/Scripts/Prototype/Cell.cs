@@ -8,6 +8,7 @@ namespace Prototype
         private Renderer _renderer;
         
         public bool IsClaimable => _owner < 0;
+        public int Owner => _owner;
         
         public void Hover()
         {
@@ -24,10 +25,15 @@ namespace Prototype
         public bool Claim(int owner)
         {
             if (_owner >= 0 ) return false;
+            SetOwner(owner);
+            return true;    
+        }
+
+        public void SetOwner(int owner)
+        {
             _owner = owner;
             SetColor(PlayerController.GetPlayerColour(_owner));
             PlayerController.IncrementScore(_owner, 1);
-            return true;    
         }
 
         private void Start()
