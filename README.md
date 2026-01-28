@@ -3,7 +3,7 @@ A prototype of a 2 player game that is a mashup of Reversi and Tetris.
 It can be played on itch.io https://msgraham.itch.io/reversism
 
 <p align="center">
-	<img src="images/ScreenshotA.jpg" alt="Screenshot A" height="400"/>
+	<img src="images/screenshotA.jpg" alt="Screenshot A" height="400"/>
 </p>
 
 ## Dependencies
